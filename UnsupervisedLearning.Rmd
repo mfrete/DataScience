@@ -1,0 +1,64 @@
+---
+title: "Unsupervised Learning"
+output: html_notebook
+---
+
+Two different goals:
+* Looking for patterns in data where no outcome is defined (groups of observations)
+* Looking for related features (groups of variables)
+
+# K-means
+# Hierarchical clustering
+# PCA
+## Intro
+Principal components are linear combinations of variables
+Retains/explains the maximum variation for a given number of components
+   Regression line is the first principal component
+They are orthogonal to each other
+
+Issues;
+* Scaling
+* Missings
+* categorical variables
+
+[Luke Hayden article on PCA on Datacamp](https://www.datacamp.com/community/tutorials/pca-analysis-r)
+
+```{r}
+library(tidyverse)
+library(ggbiplot)
+```
+
+```{r}
+mtcars_pca <- prcomp(mtcars, center = TRUE, scale = TRUE)
+ 
+ggbiplot(mtcars_pca) + theme_light()
+```
+
+```{r}
+iris_pca <- prcomp(iris[1:4], center = TRUE, scale = TRUE)
+
+ggbiplot(iris_pca, groups = iris$Species) + theme_light()
+```
+```{r}
+UKeats <- tibble(
+foods  = c("Alcoholic drinks", "Beverages", "Carcase meat", "Cereals", "Cheese", "Confectionery", "Fats and oils", "Fish", "Fresh fruit", "Fresh potatoes", "Fresh Veg", "Other meat", "Other Veg", "Processed potatoes", "Processed Veg", "Soft inks", "Sugars"),
+England = c(375,57,245,1472,105,54,193,147,1102,720,253,685,488,198,360,1374,156),
+NIreland = c(135,47,267,1494,66,41,209,93,674,1033,143,586,355,187,334,1506,139),
+Scotland = c(458,53,242,1462,103,62,184,122,957,566,171,750,418,220,337,1572,147),
+Wales = c(475,73,227,1582,103,64,235,160,1137,874,265,803,570,203,365,1256,175)
+)
+
+UKeats_pca<- prcomp(UKeats[2:5], center = TRUE, scale = TRUE)
+summary(UKeats_pca)
+
+ggbiplot(UKeats_pca) + theme_light()
+```
+
+```{r}
+UKeats2 <- UKeats %>% gather(country, quantity, 2:5) %>% spread(foods, quantity)
+UKeats2_pca<- prcomp(UKeats2[2:18], center = TRUE)
+UKeats2_pca
+summary(UKeats2_pca)
+
+ggbiplot(UKeats2_pca, labels =UKeats2$country) + theme_light()
+```

@@ -1,0 +1,123 @@
+---
+title: "Dates and times"
+output: html_notebook
+---
+
+# Dates and Times - builtin function
+
+ISO 8601
+
+as.Date()
+
+library(anytime)
+anytime() - recognises US data convention not british
+
+Jan 1st 1970 is day zero
+
+scale_x_date(date_breaks = "10 years", date_labels = "%Y")
+
+Sys.Date()
+
+as.POSIXlt() - list output
+as.POSIXct() - seconds since Jan 1st 1970
+
+POSIX - Portable Operating System Interface
+
+##timezones
+UTC - Coordinated Universal Time/Local
+
+tz
+
+# lubridate
+
+specific function
+ymd() - family corresponding to different orders
+dmy_hms() - also handles datetime
+parse_date_time() - general function - can pass a string of orders
+
+make_date() - specify date from components
+make_datetime()
+
+## extracting parts of dates
+year()
+month()
+day()
+hour()
+min()
+second()
+wday()
+yday()
+tz()
+
+leap_year()
+am()
+pm()
+dst()
+quarter()
+semester()
+
+## Rounding
+
+Useful in similar situations to extraction, but preserves the context of the unit
+round_date()
+ceiling_date()
+floor_date()
+
+#Arithmetic with datetimes
+difftime()
+now()
+today()
+
+## time spans
+### period - human intuition of time
+days()
+### duration - stopwatch view of time
+ddays()
+
+synodic month
+Saros
+
+#### sequences of dates
+today() + 1:10*days
+%m+%
+%m-%
+add_with_rollback()
+
+### Intervals (3rd option)
+best choice when you have start and end
+%--%
+interval()
+int_start()
+int_end()
+int_length()
+as.period()
+as.duration()
+%within%
+int_overlaps()
+
+# Other stuff
+## Time zones
+Sys.timezone()
+IANA timezones - Arthur David Olson
+OlsonNames()
+force_tz() - same clock time, different timezone
+with_tz() - view same time in different timezone
+
+## Times without dates
+library(hms)
+
+## Speed
+library(fasttime)
+fastPOSIXct()
+
+lubridate::fast_strptime()
+
+write_csv() knows how to handle output in ISO format
+stamp()
+
+compare processing time:
+library(microbenchmark)
+
+microbenchmark()
+
+

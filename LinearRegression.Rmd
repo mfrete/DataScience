@@ -1,0 +1,72 @@
+---
+title: "Machine Learning"
+output: 
+  html_notebook:
+   toc: true
+   number_sections: true
+---
+
+Anscombe
+Pearson
+Correlation hypothesis tests
+Spurious Correlations
+LeastSquares
+geom_smooth(method="lm")
+
+bdims
+
+response = f(explanatory) + noise
+understand noise term is the key - it should be normally distributed with constant sd
+residuals e = Y-Y_hat
+
+Types of regression models:
+* Least Squares
+* Weighted
+* Generalized
+* Nonparametric
+* Ridge
+* Bayesian
+
+Dangerous to extrapolate to values beyond the input dataset
+
+lm()
+coef()
+
+Difference for inference
+
+fitted.values()
+residuals()
+broom::augment()
+predict()
+
+#Model Fit
+Sum of squares penalises large residuals more (squaring)
+SSE - Sum of Squared Errors
+RMSE = Residual Standard Error, in units of response
+
+df.residual()
+
+## Compute RMSE
+sqrt(sum(residuals(mod)^2) / df.residual(mod))
+
+null model lm(y ~ 1)
+
+SSE of our model as ratio of SSE for null model
+proportion not ex
+same as correlation coefficient
+
+## Compute R-squared
+bdims_tidy %>%
+  summarize(var_y = var(wgt), var_e = var(.resid)) %>%
+  mutate(R_squared = 1 - var_e/var_y)
+  
+# Unusual points
+Leverage
+* further from the horizontal centre = more leverage. y doesn't matter!
+cf. hat matrix, .hat
+
+Influence
+* high leverage and affects the lm fit
+* cook's distance
+
+"because it improves my results" is not a good reason to remove an outlier!

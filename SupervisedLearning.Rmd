@@ -1,0 +1,85 @@
+---
+title: "Supervised Learning"
+output: 
+ html_notebook:
+  toc: true
+  number_sections: true
+---
+
+# K nearest neighbours
+Classification problem.
+Assign a new observation by getting its k nearest neighbours to 'vote'
+
+library("class")
+knn()
+
+confusion matrix
+table(signs_pred, signs_actual)
+
+## Values of k?
+depends on complexity of pattern being learned and amount of noise in the data
+k = rot(obs) in training data?
+try a few k's and observe the performance
+voting results: attr("prob")
+
+## data prep
+benefits from normalisation
+dummification to allow distances between categoricals
+min-max normalization
+
+# Naive Bayes
+library(naivebayes)
+naive_bayes()
+predict(..., type = "prob")
+
+Naive because it assumes the predictor events are independent.
+
+The Laplace correction for missing predictor/outcome combinations (add 1 event to that combo)
+
+# Logistic Regression
+glm()
+predict(..., type = "response")
+class imbalance problem
+ROC and AUC/AUROC
+library(pROC)
+roc()
+auc()
+Specificity and Sensitivity
+
+## Dummies, missings, interactions
+Impute value and add a binary 'missing' flag
+
+combination may strengthen, weaken, eliminate, reverse effect
+
+Marketing model RFM: Recency, Frequency, Money
+
+## Automatic feature selection
+stepwise
+backword and forward, different models, no guarantees of optimal model, violates assumptoins relating to explanation (but not prediction), i.e. it will under or overstate importance of some features
+
+create null model, create full model, then:
+step()
+
+# Classification Tree / Random Forest
+library("rpart")
+rpart()
+predict()
+recurvise partitioning
+
+library(rpart.plot)
+
+Maximises homogeneity of groups
+Always axis parallel splits
+Overly complex for some patterns (e.g. where a diagonal line would do)
+prone to overfitting - use a random holdout sample
+
+## Pre-pruning
+maximum depth
+minimum obs to allow a split
+rpart.control()
+plotcp()
+prune()
+
+## Post pruning
+complexity vs error plot
+

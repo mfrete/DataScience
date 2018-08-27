@@ -1,0 +1,115 @@
+---
+title: "Cluster Analysis"
+output:
+  html_notebook:
+    toc: true
+    number_sections: true
+---
+
+# Distance
+## Workflow
+Pre-processing
+Similarity measure
+Cluster
+Analyse - is it meaningful?
+
+## Distance
+Distance = 1 - Similarity
+
+Euclidean distance - dist()
+
+standardisation - so that e.g. height and weight can be compared on a common scale
+(x - mean) / sd
+
+scale()
+
+Jaccard Distance
+dist(method = "binary")
+
+more than two categories - dummification
+library(dummies)
+dummy.data.frame(survey_b)
+
+
+```{r}
+library(tidyverse)
+temp <- tibble(x = c(0,1,2), y = c(0,1,2), z = c(0,1,2))
+dist(temp)
+```
+
+
+# Hierarchy
+Linkage
+* COmplete linkage
+* Single linkage
+* Average linkage
+* Centroid linkage
+
+Complete and average are most commonly used
+single: unbalanced
+centroid: inversions
+
+* First group: which two observations are the closest?
+* Second group based on the smallest of: 
+ * (A) distance from first group to another observation using the selected linkage method?
+ * (B) distance between two observations not in the first group (i.e. start a new group)
+
+hclust()
+cutree()
+
+scale() to normalise data
+
+## dendrogram
+AShared branch is at height equal to distance between them
+
+library(dentexted)
+as.dendrogram()
+color_branches()
+
+## Making sense
+* Plot 2 dimensions at a time (incomplete picture)
+* perform PCA and then plot (hard to interpret)
+* summary stats of each dimension grouped by cluster (useful!)
+
+## Balanced trees
+Whether you want balanced or unbalanced trees for your hierarchical clustering model depends on the context of the problem you're trying to solve. Balanced trees are essential if you want an even number of observations assigned to each cluster. On the other hand, if you want to detect outliers, for example, an unbalanced tree is more desirable because pruning an unbalanced tree can result in most observations assigned to one cluster and only a few observations assigned to other clusters. 
+
+
+# K-means
+Euclidean only - why?
+
+* Choose k initial centroids at random in the feature space
+* OR IS IT randomly assign each observation to a cluster
+* assign each point to the cluster of the nearest centroid
+* calculate the centre of the points in the cluster as the new centroid
+* repeat until the centroids stabilise (different stopping criteria)
+* Optional - run multiple times to overcome random component
+ * total within cluster sum of squares - lower = better model
+ * set.seed() to ensure reproducability
+
+kmeans(nstart = 20)
+
+
+
+
+## Estimates of k
+### Elbow plot
+calculate total within cluster sum of squares for k=1 up to whatever
+look for a dropping off 'elbow' point and use that value of k
+scree plot - TWSS for increasing values of k - look for elbow
+
+### Silhouette
+What is silhouette width?
+What is average silhouette width?
+Want mean distance to observations within the same cluster to be smaller than average distance to nearest neighbouring cluster
+library(cluster)
+pam()
+pamobjectname$silinfo$avg.width
+silhouette()
+
+### Other approaches to investigate
+* k-mediods
+* DBSCAN
+* Optics
+
+We have a lot of uncharted waters ahead. best we understand how our ship works.

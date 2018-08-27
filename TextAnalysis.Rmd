@@ -1,0 +1,334 @@
+---
+title: "Text Mining"
+output: 
+ html_notebook:
+  toc: true
+  number_sections: true
+---
+
+#Bag of words
+Semantic Parsing (care about word type and order) vs Bag of words (don't care).
+
+A way to count terms, or n-grams, across a collection of documents
+## Reading in data
+```{r message=FALSE, warning=FALSE}
+#install.packages("qdap")
+library(qdap)
+```
+### Import Norse Myth Data
+```{r}
+library(XML)
+library(RCurl)
+```
+```{r}
+
+prose_edda_1 <- getURL("https://en.wikisource.org/wiki/Prose_Edda/Gylfaginning")
+prose_edda_2 <- getURL("https://en.wikisource.org/wiki/Prose_Edda/Skáldskaparmál")
+
+
+pe1_html = htmlTreeParse(prose_edda_1, useInternal = TRUE)
+pe1_text = unlist(xpathApply(pe1_html, '//p', xmlValue))
+pe1_text = gsub('\\n', ' ', pe1_text)
+#pe1_text = paste(pe1_text, collapse = ' ')
+
+
+pe2_html = htmlTreeParse(prose_edda_2, useInternal = TRUE)
+pe2_text = unlist(xpathApply(pe2_html, '//p', xmlValue))
+pe2_text = gsub('\\n', ' ', pe2_text)
+
+```
+
+
+### Clean data and create corpus
+```{r message=FALSE, warning=FALSE}
+library(tm)
+library(tidyverse)
+library(qdap)
+library(SnowballC)
+```
+
+```{r}
+qdap_clean <- function(x){
+  x <- replace_abbreviation(x)
+  x <- replace_contraction(x)
+  x <- replace_number(x)
+  x <- replace_ordinal(x)
+  x <- replace_ordinal(x)
+  x <- replace_symbol(x)
+  x <- tolower(x)
+  x <- bracketX(x)
+  return(x)
+}
+
+#NOT USED
+#removePunctuation(text)
+#removeNumbers(text)
+#stripWhitespace(text)
+
+tm_clean <- function(corpus) {
+  corpus <- tm_map(corpus, removePunctuation)
+  corpus <- tm_map(corpus, stripWhitespace)
+  corpus <- tm_map(corpus, removeWords, c(stopwords("en"), "said", "called", "one", "answered", "will", "name"))
+  return(corpus)
+}
+
+```
+
+```{r}
+(pe1_corp <- pe1_text %>%
+  qdap_clean() %>%
+  VectorSource() %>%
+  VCorpus)
+
+
+
+(pe1_corp <- tm_clean(pe1_corp))
+
+(pe2_corp <- pe2_text %>%
+  qdap_clean() %>%
+  VectorSource() %>%
+  VCorpus)
+
+
+
+(pe2_corp <- tm_clean(pe2_corp))
+```
+
+### Create term-document matrix
+
+```{r}
+pe1_TDM <- TermDocumentMatrix(pe1_corp)
+pe1_TDM_M <- pe1_TDM %>% as.matrix()
+pe1_TDM_freq <- rowSums(pe1_TDM_M)
+
+pe2_TDM <- TermDocumentMatrix(pe2_corp)
+pe2_TDM_M <- pe2_TDM %>% as.matrix()
+pe2_TDM_freq <- rowSums(pe2_TDM_M)
+```
+
+```{r}
+library(wordcloud)
+```
+
+```{r}
+wordcloud(names(pe1_TDM_freq), pe1_TDM_freq, max.words = 25, colors = viridis::plasma(5))
+wordcloud(names(pe2_TDM_freq), pe1_TDM_freq, max.words = 25, colors = viridis::plasma(5))
+```
+
+```{r}
+plot(freq_terms(
+  pe1_text, 
+  top = 10, 
+  at.least = 3, 
+  stopwords = c(qdapDictionaries::Top200Words, tm::stopwords("english"), "called", "answered", "asked", "took", "saw", "things", "thus")
+))
+
+plot(freq_terms(
+  pe2_text, 
+  top = 10, 
+  at.least = 3, 
+  stopwords = c(qdapDictionaries::Top200Words, tm::stopwords("english"), "called", "answered", "asked", "took", "saw", "things", "thus")
+))
+```
+
+### WORK IN PROGRESS - NOT VERY GOOD YET
+```{r}
+word_associate(pe1_text[40:50], match.string = "thor", 
+               stopwords = c(Top200Words), 
+               network.plot = TRUE, cloud.colors = c("gray85", "darkred"))
+```
+
+```{r}
+word_network_plot(pe1_text[40:50], stopwords = Top200Words)
+```
+
+## Dendrograms
+```{r}
+#library(dendextend)
+
+pe1_hc <- pe1_TDM %>% 
+  removeSparseTerms(sparse = 0.85) %>%
+  as.matrix() %>%
+  dist() %>%
+  hclust() %>%
+  as.dendrogram()
+
+# Change the branch color to red for "marvin" and "gaye"
+pe1_hc <- branches_attr_by_labels(pe1_hc, c("thor", "odin", "ganglere"), "red")
+
+plot(pe1_hc, main = "Better PE1 Dendrogram")
+rect.dendrogram(pe1_hc, k=4, border = "grey50")
+```
+
+##Preprocessing functions
+```{r}
+stemDocument()
+stemCompletion()
+```
+
+## Comparisons
+
+```{r}
+
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation)
+  corpus <- tm_map(corpus, stripWhitespace)
+  corpus <- tm_map(corpus, removeNumbers)
+  corpus <- tm_map(corpus, content_transformer(tolower))
+  corpus <- tm_map(corpus, removeWords, c(stopwords("en"), "amp", "glass", "chardonnay", "coffee"))
+  return(corpus)
+}
+
+
+all_pe1 <- paste(pe1_text, collapse = " ")
+all_pe2 <- paste(pe2_text, collapse = " ")
+
+peall_tdm <- c(all_pe1, all_pe2) %>% 
+  VectorSource() %>% 
+  VCorpus() %>% 
+  clean_corpus() %>%
+  TermDocumentMatrix() 
+
+colnames(peall_tdm) <- c("part 1", "part 2")
+```
+
+```{r}
+commonality.cloud(peall_tdm %>% as.matrix(), max.words = 100, colors = "steelblue1")
+```
+
+```{r}
+comparison.cloud(peall_tdm %>% as.matrix(), max.words = 50, colors = c("orange", "blue"))
+```
+
+```{r}
+library(plotrix)
+
+peall_top25_df <- peall_tdm %>% as.matrix() %>%
+  # Convert to data frame
+  as_data_frame(rownames = "word") %>% 
+  # Keep rows where word appears everywhere
+  filter_all(all_vars(. > 0)) %>% 
+  # Get difference in counts
+  mutate(difference = `part 1` - `part 2`) %>% 
+  # Keep rows with biggest difference
+  top_n(25, wt = difference) %>% 
+  # Arrange by descending difference
+  arrange(desc(difference))
+
+pyramid.plot(
+  # Chardonnay counts
+  peall_top25_df$`part 1`, 
+  # Coffee counts
+  peall_top25_df$`part 2`, 
+  # Words
+  labels = peall_top25_df$word, 
+  top.labels = c("Part 1", "Words", "Part 2"), 
+  main = "Words in Common", 
+  unit = NULL,
+  gap = 8)
+
+```
+
+```{r}
+findAssocs(pe1_TDM, c("thor"), 0.7)
+```
+
+## Tokenisation
+Accorgint to its CRAN entry, Weka is a collection of machine learning algorithms for data mining tasks written in Java, containing tools for data pre-processing, classification, regression, clustering, association rules, and visualization.
+
+```{r message=FALSE, warning=FALSE}
+#install.packages("RWeka")
+library(RWeka)
+```
+
+```{r}
+# Make tokenizer function 
+tokenizer <- function(x) {
+  NGramTokenizer(x, Weka_control(min = 2, max = 2))
+}
+
+# Create bigram_dtm
+pe1_bigram_dtm <- DocumentTermMatrix(pe1_corp, control = list(tokenize = tokenizer))
+```
+
+```{r}
+pe1_bigram_dtm_m <- as.matrix(pe1_bigram_dtm)
+
+
+# Create freq
+bigram_freq <- colSums(pe1_bigram_dtm_m)
+
+# Create bi_words
+bi_words <- names(bigram_freq)
+
+# Examine part of bi_words
+str_subset(bi_words, "^thor")
+
+# Plot a wordcloud
+wordcloud(bi_words, bigram_freq, max.words = 15)
+```
+
+## Alternative Weighting
+So far have we used term frequency weighting.
+
+Alternative 1: 
+* Term frequency Inverse document frequency: Words that are common across all document have little value.
+
+
+```{r}
+pe1_tdm_TfIdf <- TermDocumentMatrix(pe1_corp, control = list(weighting = weightTfIdf))
+
+pe1_tdm_TfIdf_m <- as.matrix(pe1_tdm_TfIdf)
+
+pe1_tdm_TfIdf_freq <- rowSums(pe1_tdm_TfIdf_m)
+
+#wordcloud(names(pe1_tdm_TfIdf), pe1_tdm_TfIdf_freq, max.words = 25, colors = viridis::plasma(5))
+sort(pe1_tdm_TfIdf_freq, decreasing = TRUE)[1:25] 
+```
+
+# Sentiment Analysis
+[Julia Silge, Tidy Text Mining](https://www.tidytextmining.com/)
+
+```{r}
+#install.packages("tidytext")
+library(tidytext)
+get_sentiments("bing")
+get_sentiments("nrc")
+
+data(package = "gutenbergr")
+
+
+library(janeaustenr)
+austen_books()
+
+unnest_tokens()
+
+tidy_shakespeare %>%
+  # Implement sentiment analysis using "bing" lexicon
+  inner_join(get_sentiments("bing")) %>%
+  # Count using four arguments
+  count(title, type, index = linenumber %/% 70, sentiment)
+
+library(lubridate)
+floor_date(as.Date("2016-09-27"), unit = "3 months")
+
+```
+## song lyrics
+```{r}
+#load("~/R/DataScience/song_lyrics.rda")
+song_lyrics %>% filter(artist=="the beatles") %>% count(song)
+```
+
+##Gutenberg
+[Catalog](https://www.gutenberg.org/catalog/)
+
+[Example](https://peerchristensen.netlify.com/post/fair-is-foul-and-foul-is-fair-a-tidytext-entiment-analysis-of-shakespeare-s-tragedies/)
+
+[gutenbergr](https://cran.r-project.org/web/packages/gutenbergr/gutenbergr.pdf)
+
+## TV  news
+[TV News API](https://api.gdeltproject.org/api/v2/summary/summary?DATASET=IATV&TYPE=SUMMARY&STARTDATETIME=&ENDDATETIME=)
+
+#Linguistic Semantic Analysis
+[Reddit Politics LSA](https://www.r-bloggers.com/comparing-subreddits-with-latent-semantic-analysis-in-r/)
+

@@ -1,0 +1,16 @@
+---
+title: "Bayes Theorem"
+output: html_notebook
+---
+
+```{r}
+#install.packages("TeachBayes")
+library(TeachBayes)
+```
+
+# Bayes' Theorem
+# Medical example
+# Apple crates example
+# Discrete
+# Continuous
+# 
